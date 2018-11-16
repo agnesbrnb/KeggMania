@@ -1,0 +1,147 @@
+/**
+ * ListReaction.java
+ **/
+
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+
+import java.awt.Dimension;
+
+import java.io.IOException;
+import java.io.File;
+import java.io.PrintWriter;
+
+import java.net.URL;
+
+import java.util.Scanner;
+import java.util.ArrayList;
+
+import java.lang.System;
+
+/**
+ * Permet de creer la liste des reactions ou impliquant le gene selectionné
+ * 
+ * @author Agnes Barnabe & Martin Davy
+ **/
+
+@SuppressWarnings("serial")
+public class ListReaction extends JPanel {
+
+	private String path = System.getProperty("user.dir");
+	private String sp;
+	private String gene;
+	protected String[] array ;
+	protected JList<String> list = new JList<String>();
+		
+	/**
+	 * Attribue les valeurs a la liste avec un scroll.
+	 * 
+	 * @param nouvSp la nouvelle valeur de sp
+	 * @param nouvGene la nouvelle valeur de gene
+	 * */
+	public void setInvoReac(String nouvSp, String nouvGene) {
+		sp = nouvSp; gene = nouvGene;
+		File file = new File (path+"/class/listreac/"+sp+gene+".txt");
+		
+		try {
+			// Si le ficher n'existe pas en local
+			if(!file.exists()) {
+				getInvoReac();
+			} 
+			Scanner s = new Scanner(file);
+			s.useDelimiter("\\s*\n\\s*");
+			array = s.next().split("/");
+			s.close();
+						
+			list = new JList<String>(array);
+			JScrollPane scrollPane = new JScrollPane(list);
+			scrollPane.setPreferredSize(new Dimension(300,75));
+			
+			this.add(scrollPane);
+			
+		}	 catch(IOException ex) {
+			System.out.println("ERREUR : le texte n'existe pas");
+		}	
+	}
+		
+	/**
+	 * Enregistre le fichier texte des correspondances entre gene et reactions
+	 **/
+	public void getInvoReac() {
+		
+		File file = new File(path+"/class/genetxt/"+sp+gene+".txt");
+		try {
+			Scanner s = new Scanner(file);
+					
+			String currentLine, reacInvolv = "", code;
+			int j, taille;
+			ArrayList<String> rectCoor = new ArrayList<String>();
+			String[] reacSplit;	PrintWriter listReaction;
+			
+			
+			while(s.findInLine("PATHWAY") == null) {
+				s.nextLine();
+			} // Ligne avant PATHWAY
+			
+			// Recupere les codes des voies metaboliques dans une JList
+			ArrayList<String> codeVoie = new ArrayList<String>();
+			while(s.findInLine("Metabolic pathways")==null) {
+				codeVoie.add(s.next());
+				s.nextLine();
+			}			
+			
+			s.close();
+			
+			for( int i=0; i < codeVoie.size(); i++) {
+				
+				code = codeVoie.get(i).split(sp)[1];
+				rectCoor.clear();
+				
+				URL url = new URL("http://rest.kegg.jp/get/"+sp+code+"/conf");
+				s = new Scanner(url.openStream());
+											
+				// Initialisation de la ligne courante
+				currentLine = s.nextLine(); 
+				
+				// Cherche les coordonnees des reactions correspondant au gene cible
+				while(s.hasNextLine()) {
+					if(currentLine.matches(".+"+gene+".+")) {
+						rectCoor.add(currentLine.split("\t")[0]);
+					}
+					currentLine = s.nextLine();															
+				}	
+				s.close();
+				
+				url = new URL("http://rest.kegg.jp/get/map"+code+"/conf");
+				s = new Scanner(url.openStream());
+				
+				currentLine = s.nextLine();
+				
+				while(s.hasNextLine()) {
+					if(rectCoor.contains(currentLine.split("\t")[0])) {
+						reacSplit = currentLine.split(", ");
+						taille = reacSplit.length -1; j=0;
+						do {
+							reacInvolv += reacSplit[taille-j]+" @ "+codeVoie.get(i)+"/";
+							j++;
+						} while(reacSplit[taille-j].matches("R.+"));
+					}
+					currentLine = s.nextLine();
+				}		
+				s.close();
+				
+			}
+			reacInvolv += "\n";
+			listReaction = new PrintWriter(new File (path+"/listreac/"+sp+gene+".txt"));
+			listReaction.println(reacInvolv);
+			listReaction.close();
+			
+		} catch (IOException e) {
+			System.out.println("ERREUR : IOException dans rechCode");
+		}		
+		
+	}	
+	
+} // ListReaction.java
+

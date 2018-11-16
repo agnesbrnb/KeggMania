@@ -1,0 +1,77 @@
+/**
+ * 
+ * Cadre.java
+ * 
+ * */
+ 
+import javax.swing.JFrame;
+import javax.swing.BoxLayout;
+import java.io.IOException;
+import java.awt.Container;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+/**
+ * Fenetre Swing qui va afficher les cadres.
+ * Compilation : javac -cp ../lib/swingbox-1.1-bin.jar:../src ../src/Cadre.java -d ./ 
+ * Lancement : java -cp ../lib/swingbox-1.1-bin.jar:. Cadre
+ * 
+ * @author Agnes Barnabe & Martin Davy
+ * */
+
+public class Cadre extends JFrame implements ActionListener{
+
+	
+	/* Variables d'instance */
+	protected Container myContainer = null;	// Declaration du container general
+	protected ContainerHaut myContainerHaut;
+	protected ContainerBas myContainerBas; 
+	
+	/* Constructeur */
+  
+	public Cadre() throws IOException {
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);		// Fermeture de la fenetre
+		setTitle("Swingbox Test");
+		setSize(1200,1000);
+		
+		//On lui spécifie un container principal
+		this.setContentPane(getContainer());
+	}
+	
+	/* Methodes */
+	
+	/**
+	 * Construit les containers de la fenetre.
+	 * */
+	private Container getContainer() throws IOException {
+		myContainer = getContentPane();
+		myContainer.setLayout(new BoxLayout(myContainer, BoxLayout.PAGE_AXIS));
+		
+		myContainerHaut = new ContainerHaut();		
+		myContainerHaut.containerHaut.searchGen.addActionListener(this);
+		
+		myContainerBas = new ContainerBas();	
+		myContainerBas.containerMid.searchPath.addActionListener(this);
+		
+		myContainer.add(myContainerHaut);
+		myContainer.add(myContainerBas);
+		
+		return myContainer;
+	}
+	
+	public void actionPerformed(ActionEvent e) {
+		if(e.getSource() == myContainerBas.containerMid.searchPath) {
+			System.out.println("Bonjour");
+		}
+		if(e.getSource() == myContainerHaut.containerHaut.searchGen) {
+			System.out.println("Salut");
+		}
+	}
+	
+	/* Main */
+	
+	public static void main(String[] args) throws IOException {
+		Cadre browser = new Cadre();
+		browser.setVisible(true);
+	}
+}
